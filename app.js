@@ -11,7 +11,7 @@ const config = {
 
 const app = express();
 app.get('/' , (req, res) => res.send("Hello World"));
-app.listen(port || 5000, () => console.log(`Listening on port ${port}!`));
+app.listen(3001 || 8000, () => console.log(`Listening on port ${port}!`));
 app.post('/webhook', line.middleware(config), (req, res) => {
     Promise
     .all(req.body.events.map(handleEvent))
