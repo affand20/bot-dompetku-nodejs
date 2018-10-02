@@ -1,0 +1,6 @@
+1. init project nodejs
+2. install express, line sdk
+3. tambah yarn (buat run project di server)
+4. tambah package process (buat port di server)
+5. tambah file Procfile (buat declare cara run di server)
+6. exclude file package-lock.json pas push ke server
