@@ -30,6 +30,7 @@ var eventid = 0;
 var targetTabungan = {};
 var pengeluaran = {};
 app.get('/' , (req, res) => res.send("Hello World"));
+app.use('/laporan', express.static('public'))
 app.listen(port, () => console.log(`Listening on port ${port}!`));
 
 app.post('/webhook', line.middleware(config), (req, res) => {
@@ -58,7 +59,7 @@ function handleEvent(event) {
             
             const text = message.text;
             
-            if (text == "Input Pemasukan" || menuId==1 && text != "Tabunganku") {
+            if (text == "Input Pemasukan" || menuId==1 && (text != "Tabunganku" && text!="Input Pengeluaran" && text!="Lihat Laporan" && text!="Reset Data" && text!="Petunjuk")) {
                 menuId = 1;
                 if (text=="Input Pemasukan") {
                     client.replyMessage(event.replyToken, {
@@ -94,7 +95,10 @@ function handleEvent(event) {
                 }
             }                        
             
-            else if (text == "Tabunganku" || menuId == 3 && (eventid==0||eventid==1||eventid==2||eventid==3||eventid==4)) {
+            else if (text == "Tabunganku" || menuId == 3 
+                    && (eventid==0||eventid==1||eventid==2||eventid==3||eventid==4)
+                    && (text!="Input Pemasukan" && text!="Input Pengeluaran" && text!="Lihat Laporan" && text!="Reset Data" && text!="Petunjuk")
+                ) {
                 menuId = 3;   
                 
                 if (text=="Edit Daftar Tabunganku") {
@@ -213,7 +217,9 @@ function handleEvent(event) {
                 
             }
 
-            else if (text == "Input Pengeluaran" || menuId == 2) {
+            else if (text == "Input Pengeluaran" || menuId == 2 
+                    && (text!="Input Pemasukan" && text!="Tabunganku" && text!="Lihat Laporan" && text!="Petunjuk" && text!="Reset Data")
+                ) {
                 menuId = 2;
 
                 if (menuId==2 && eventid==2) {
@@ -258,12 +264,16 @@ function handleEvent(event) {
                 }
             }
 
-            else if(text=="Lihat Laporan" || menuId==4){
+            else if(text=="Lihat Laporan" || menuId==4
+                    && (text!="Input Pemasukan" && text!="Input Pengeluaran" && text!="Tabunganku" && text!="Reset Data" && text!="Petunjuk")
+                ){
                 menuId = 4;
                 getLaporan(event.source.userId, event.replyToken);
             }
 
-            else if(text=="Reset Data"||menuId==5){
+            else if(text=="Reset Data"||menuId==5 
+                    && (text!="Input Pemasukan" && text!="Input Pengeluaran" && text!="Tabunganku" && text!="Petunjuk" && text!="Lihat Laporan")
+                ){
                 menuId = 5;
                 
                 if (text=="Reset Data") {
