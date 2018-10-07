@@ -93,13 +93,15 @@ function handleEvent(event) {
         if (message.type == 'text') {
             
             const text = message.text;
+            console.log(eventid);
+            
             
             if (text == "Input Pemasukan" || menuId==1 && 
                 (eventid == 6 || eventid == 7 || eventid == 9) &&
                 (text != "Tabunganku" && text!="Input Pengeluaran" && text!="Lihat Laporan" && text!="Reset Data" && text!="Petunjuk")) {
                 menuId = 1;                
                     
-                if (menuId==1&&(eventid==7 || eventid == 9)) {
+                if (menuId==1&&(eventid==7 || eventid == 9)&&text!="Input Pemasukan") {
                     if (text.includes("Rp")) {
                         pemasukan.textNominal = text;
                         var newText = text.substr(2);
@@ -140,13 +142,19 @@ function handleEvent(event) {
                     })
                 }
 
-                if (text=="Input Pemasukan") {
+                if (text=="Input Pemasukan" && eventid!=9) {
                     eventid = 6;
                     client.replyMessage(event.replyToken,{
                         "type":"text",
                         "text":"Duit darimana kak ?"
                     });
-                }                
+                } else if (text=="Input Pemasukan" && eventid==9){
+                    menuId = 1;
+                    return client.replyMessage(event.replyToken,{
+                        "type":"text",
+                        "text":"Isi pemasukan awal kakak dulu dong"
+                    })
+                }             
             }                        
             
             else if (text == "Tabunganku" || menuId == 3 
@@ -168,10 +176,16 @@ function handleEvent(event) {
                     return hapusTabungan(event.source.userId, namaTabungan, event.replyToken);
                 }
                                 
-                if (text=="Tabunganku") {
+                if (text=="Tabunganku" && eventid!=9) {
                     eventid = 0;
                     getSisaUang(event.source.userId, event.replyToken);
-                }                
+                } else if (text=="Tabunganku" && eventid==9){
+                    menuId = 1;
+                    return client.replyMessage(event.replyToken,{
+                        "type":"text",
+                        "text":"Isi pemasukan awal kakak dulu dong"
+                    })
+                }
 
                 if (menuId==3 && eventid==3 && (text!="Tambah Daftar Tabunganku")) {
                     if (text=='tetap'||text=="tetep"||text=="Tetap"||text=="Tetep") {
@@ -315,11 +329,17 @@ function handleEvent(event) {
                     })
                 }
                 
-                if (text == "Input Pengeluaran") {
+                if (text == "Input Pengeluaran" && eventid!=9) {
                     eventid = 1;
                     return client.replyMessage(event.replyToken, {
                         'type':'text',
                         'text':'Tujuannya buat apa kak ?'
+                    })
+                } else if (text == "Input Pengeluaran" && eventid==9){
+                    menuId = 1;
+                    return client.replyMessage(event.replyToken,{
+                        "type":"text",
+                        "text":"Isi pemasukan awal kakak dulu dong"
                     })
                 }
             }
@@ -328,24 +348,32 @@ function handleEvent(event) {
                     && (text!="Input Pemasukan" && text!="Input Pengeluaran" && text!="Tabunganku" && text!="Reset Data" && text!="Petunjuk")
                 ){
                 menuId = 4;
-                return client.replyMessage(event.replyToken, {
-                    "type":"flex",
-                    "altText":"Tap untuk lihat laporan",
-                    "contents":{
-                        "type": "bubble",
-                        "hero": {
-                            "type": "image",
-                            "url": "https://bot-dompetku-nodejs.herokuapp.com/laporan/images/imagemap-1040.png",
-                            "size": "full",
-                            "aspectRatio": "1:1",
-                            "aspectMode": "cover",
-                            "action": {
-                            "type": "uri",
-                            "uri": "line://app/1607576128-DLpN36z5"
+                if (text=="Lihat Laporan"&&eventid!=9) {
+                    return client.replyMessage(event.replyToken, {
+                        "type":"flex",
+                        "altText":"Tap untuk lihat laporan",
+                        "contents":{
+                            "type": "bubble",
+                            "hero": {
+                                "type": "image",
+                                "url": "https://bot-dompetku-nodejs.herokuapp.com/laporan/images/imagemap-1040.png",
+                                "size": "full",
+                                "aspectRatio": "1:1",
+                                "aspectMode": "cover",
+                                "action": {
+                                "type": "uri",
+                                "uri": "line://app/1607576128-DLpN36z5"
+                                }
                             }
                         }
-                    }
-                })
+                    })
+                } else if (text=="Lihat Laporan"&&eventid==9){
+                    menuId = 1;
+                    return client.replyMessage(event.replyToken,{
+                        "type":"text",
+                        "text":"Isi pemasukan awal kakak dulu dong"
+                    })
+                }
             }
 
             else if(text=="Reset Data"||menuId==5 
@@ -353,7 +381,7 @@ function handleEvent(event) {
                 ){
                 menuId = 5;
                 
-                if (text=="Reset Data") {
+                if (text=="Reset Data" && eventid!=9) {
                     return client.replyMessage(event.replyToken, {
                         "type":"template",
                         "altText":"Kakak yakin mau hapus semua data dompetku ?",
@@ -374,8 +402,14 @@ function handleEvent(event) {
                             "text":"Kakak yakin mau hapus semua data dompetku ?"
                         }                    
                     })
-                } else if (text=="Ya, hapus semua") {
+                } else if (text=="Ya, hapus semua" && eventid!=9) {
                     resetData(event.source.userId, event.replyToken);
+                } else{
+                    menuId = 1;
+                    return client.replyMessage(event.replyToken,{
+                        "type":"text",
+                        "text":"Isi pemasukan awal kakak dulu dong"
+                    })
                 }
             }
 
@@ -400,7 +434,7 @@ function writeData(userId, name) {
         if (error) {
             console.log('gagal');            
         } else{
-            console.log('berhasil');            
+            console.log('berhasil menyimpan data user');            
         }
     });
 }
