@@ -1,0 +1,8 @@
+.flex-column{
+    flex-direction: row!important;
+    flex-wrap: nowrap;
+    overflow-x: scroll;
+}
+.flex-column::-webkit-scrollbar{
+    display: none;
+}
