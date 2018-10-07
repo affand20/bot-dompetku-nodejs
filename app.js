@@ -35,19 +35,6 @@ var pengeluaran = {};
 var pemasukan = {};
 app.get('/' , (req, res) => res.send("Hello World"));
 app.use('/laporan', express.static('public'))
-app.use('/imagemap/', express.static('public/images/imagemap-700.png'));
-app.use('/imagemap/1040', express.static('public/images/imagemap-1040.png'));
-app.use('/imagemap/700', express.static('public/images/imagemap-700.png'));
-app.use('/imagemap/460', express.static('public/images/imagemap-460.png'));
-app.use('/imagemap/300', express.static('public/images/imagemap-300.png'));
-app.use('/imagemap/240', express.static('public/images/imagemap-240.png'));
-app.get('/imagemap-download', (req,res)=>{
-    var file = __dirname + '/public/images/imagemap-1040.png';
-    console.log(file);
-    res.download(file);
-    // res.send('imagemap page.');
-    
-})
 app.listen(port, () => console.log(`Listening on port ${port}!`));
 
 app.post('/webhook', line.middleware(config), (req, res) => {
@@ -60,20 +47,45 @@ const client = new line.Client(config);
 function handleEvent(event) {
     
     // get user id
-    client.getProfile(event.source.userId).then((profile)=>{
-        // console.log(profile);        
-        // writeData(profile.userId, profile.displayName);
-    })
+    // client.getProfile(event.source.userId).then((profile)=>{
+    //     // console.log(profile);        
+    //     // writeData(profile.userId, profile.displayName);
+    // })
 
     // get data
     // readDataUser();
     
-    if (event.type == 'join') {
-        return client.replyMessage(event.replyToken,[
-            {
-                
-            }
-        ])
+    if (event.type == 'follow') {
+        // console.log('masuk');
+        var nama, userId;
+        // get user id
+        client.getProfile(event.source.userId).then((profile)=>{
+            nama = profile.displayName;
+            userId = profile.userId;
+            writeData(userId, nama);
+            menuId = 1;
+            eventid = 9;
+            return client.replyMessage(event.replyToken,[
+                {
+                    'type':'sticker',
+                    'packageId':'11537',
+                    'stickerId':'52002759'
+                },
+                {
+                    "type":"text",
+                    "text":"Haloo kak "+nama+", aku bisa bantu catat pengeluaran dan pemasukanmu lohh"
+                },
+                {
+                    "type":"text",
+                    "text":"Tapi untuk memaksimalkan fitur Dompetku, jawab dulu pertanyaan ini ya kak"
+                },
+                {
+                    "type":"text",
+                    "text":"Berapa uang kakak saat ini ?"
+                },           
+            ])
+        })
+        
     }
     else if (event.type === 'message') {
         const message = event.message;        
@@ -83,11 +95,11 @@ function handleEvent(event) {
             const text = message.text;
             
             if (text == "Input Pemasukan" || menuId==1 && 
-                (eventid == 6 || eventid == 7) &&
+                (eventid == 6 || eventid == 7 || eventid == 9) &&
                 (text != "Tabunganku" && text!="Input Pengeluaran" && text!="Lihat Laporan" && text!="Reset Data" && text!="Petunjuk")) {
                 menuId = 1;                
                     
-                if (menuId==1&&eventid==7) {
+                if (menuId==1&&(eventid==7 || eventid == 9)) {
                     if (text.includes("Rp")) {
                         pemasukan.textNominal = text;
                         var newText = text.substr(2);
@@ -102,17 +114,12 @@ function handleEvent(event) {
                         // console.log("nominal="+newText);
                                    
                         pemasukan.nominal = newText;
-                        // if (newText.length>3) {
-                        //     newText = newText.split("").reverse().join("").match(/.{1,3}/g);                        
-                        //     for (let i = 0; i < newText.length-1; i++) {                            
-                        //         newText[i] = newText[i].split("").reverse().join("");
-                        //     }                        
-                        //     newText = newText.reverse().join(".");
-                        // }
-                        // newText = "Rp "+newText;
                         
-                        // inputPemasukan(event.source.userId, parseInt(newText), event.replyToken);
-                        inputPemasukan(event.source.userId, pemasukan.judul, parseInt(pemasukan.nominal), pemasukan.textNominal, event.replyToken);
+                        if (eventid == 9) {
+                            inputPemasukan(event.source.userId, "Pemasukan awal", parseInt(pemasukan.nominal), pemasukan.textNominal, event.replyToken);
+                        } else{
+                            inputPemasukan(event.source.userId, pemasukan.judul, parseInt(pemasukan.nominal), pemasukan.textNominal, event.replyToken);
+                        }                        
     
                     } else{
                         client.replyMessage(event.replyToken, {
@@ -143,7 +150,7 @@ function handleEvent(event) {
             }                        
             
             else if (text == "Tabunganku" || menuId == 3 
-                    && (eventid==0||eventid==1||eventid==2||eventid==3||eventid==4)
+                    && (eventid==0||eventid==1||eventid==2||eventid==3||eventid==4||eventid==12)
                     && (text!="Input Pemasukan" && text!="Input Pengeluaran" && text!="Lihat Laporan" && text!="Reset Data" && text!="Petunjuk")
                 ) {
                 menuId = 3;   
@@ -156,7 +163,7 @@ function handleEvent(event) {
                 if (text.includes("Hapus")) {
                     eventid = 0;
                     var namaTabungan = text.substr(6);
-                    console.log(namaTabungan);
+                    // console.log(namaTabungan);
                     
                     return hapusTabungan(event.source.userId, namaTabungan, event.replyToken);
                 }
@@ -207,7 +214,7 @@ function handleEvent(event) {
                     } else{
                         client.replyMessage(event.replyToken, {
                             "type":"text",
-                            "text":"Formatnya yang bener om, tambahin Rp didepan nominal uangnya"
+                            "text":"Formatnya yang bener kak, tambahin Rp didepan nominal uangnya"
                         })
                     }
                 }
@@ -249,7 +256,13 @@ function handleEvent(event) {
                     })                    
                 }
 
-                
+
+                if (text.includes('Telah Tercapai')) {
+                    eventid = 12;                    
+                    var namaTabugan = text.replace(" Telah Tercapai", "");
+                    namaTabugan = namaTabugan.replace("Atur ", "");                    
+                    return setTabunganTercapai(event.source.userId, namaTabugan, event.replyToken);
+                }
 
                 if (text.includes('Edit')) {
                     eventid = 3;
@@ -288,7 +301,7 @@ function handleEvent(event) {
                     } else{
                         return client.replyMessage(event.replyToken, {
                             "type":"text",
-                            "text":"Formatnya yang bener dong, tambahin Rp didepan nominal uangnya"
+                            "text":"Formatnya yang bener kak, tambahin Rp didepan nominal uangnya"
                         })
                     }
                 }
@@ -316,25 +329,22 @@ function handleEvent(event) {
                 ){
                 menuId = 4;
                 return client.replyMessage(event.replyToken, {
-                    "type": "imagemap",
-                    "baseUrl": "https://bot-dompetku-nodejs.herokuapp.com/imagemap-download",
-                    "altText": "Tap untuk Lihat Laporan",
-                    "baseSize": {
-                        "height": 1040,
-                        "width": 1040
-                    },
-                    "actions": [
-                        {
+                    "type":"flex",
+                    "altText":"Tap untuk lihat laporan",
+                    "contents":{
+                        "type": "bubble",
+                        "hero": {
+                            "type": "image",
+                            "url": "https://bot-dompetku-nodejs.herokuapp.com/laporan/images/imagemap-1040.png",
+                            "size": "full",
+                            "aspectRatio": "1:1",
+                            "aspectMode": "cover",
+                            "action": {
                             "type": "uri",
-                            "linkUri": "line://app/1607576128-DLpN36z5",
-                            "area": {
-                                "x": 0,
-                                "y": 0,
-                                "width": 700,
-                                "height": 700
+                            "uri": "line://app/1607576128-DLpN36z5"
                             }
-                        }                        
-                    ]
+                        }
+                    }
                 })
             }
 
@@ -551,138 +561,165 @@ function getTargetTabungan(userId, replyToken) {
               }            
             
             target.forEach((data)=>{
-                var value = data.val();                                
+                var value = data.val(); 
                 
-                balasan.contents.contents.push({
-                    "type": "bubble",
-                    "body": {
-                      "type": "box",
-                      "layout": "vertical",
-                      "contents": [
-                        {
-                          "type": "text",
-                          "text": "TABUNGANKU",
-                          "weight": "bold",
-                          "color": "#1DB446",
-                          "size": "xs"
-                        },
-                        {
-                          "type": "text",
-                          "text": value.judul,
-                          "weight": "bold",
-                          "margin": "md",
-                          "size": "xxl",
-                          "wrap": true
-                        },
-                        {
-                          "type": "separator",
-                          "margin": "xxl"
-                        },
-                        {
-                          "margin": "lg",
+                if (value.tercapai==false) {
+                    balasan.contents.contents.push({
+                        "type": "bubble",
+                        "body": {
                           "type": "box",
-                          "spacing": "md",
                           "layout": "vertical",
                           "contents": [
                             {
-                              "type": "box",
-                              "layout": "horizontal",
-                              "contents": [
-                                {
-                                  "type": "text",
-                                  "text": "Tabunganmu",
-                                  "size": "sm"
-                                },
-                                {
-                                  "type": "text",
-                                  "text": "Rp 700.000",
-                                  "size": "sm",
-                                  "align": "end"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "box",
-                              "layout": "horizontal",
-                              "contents": [
-                                {
-                                  "type": "text",
-                                  "text": "Target Tabungan",
-                                  "size": "sm"
-                                },
-                                {
-                                  "type": "text",
-                                  "text": value.textNominal,
-                                  "size": "sm",
-                                  "align": "end"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "separator"
-                            },
-                            {
-                              "type": "box",
-                              "layout": "horizontal",
-                              "contents": [
-                                {
-                                  "type": "text",
-                                  "text": "Sisa Target",
-                                  "size": "sm"
-                                },
-                                {
-                                  "type": "text",
-                                  "text": "Rp 19.300.000",
-                                  "size": "sm",
-                                  "align": "end"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "filler"
-                            },
-                            {
-                              "type": "filler"
+                              "type": "text",
+                              "text": "TABUNGANKU",
+                              "weight": "bold",
+                              "color": "#1DB446",
+                              "size": "xs"
                             },
                             {
                               "type": "text",
-                              "margin": "xxl",
-                              "text": "Semangat Nabungnya :)",
-                              "color": "#cecece",
-                              "size": "xxs",
-                              "align": "center"
+                              "text": value.judul,
+                              "weight": "bold",
+                              "margin": "md",
+                              "size": "xxl",
+                              "wrap": true
+                            },
+                            {
+                              "type": "separator",
+                              "margin": "xxl"
+                            },
+                            {
+                              "margin": "lg",
+                              "type": "box",
+                              "spacing": "md",
+                              "layout": "vertical",
+                              "contents": [
+                                {
+                                  "type": "box",
+                                  "layout": "horizontal",
+                                  "contents": [
+                                    {
+                                      "type": "text",
+                                      "text": "Tabunganmu",
+                                      "size": "sm"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "text": "Rp 700.000",
+                                      "size": "sm",
+                                      "align": "end",
+                                      "color":"#1DB446",
+                                      "weight":"bold"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "box",
+                                  "layout": "horizontal",
+                                  "contents": [
+                                    {
+                                      "type": "text",
+                                      "text": "Target Tabungan",
+                                      "size": "sm"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "text": value.textNominal,
+                                      "size": "sm",
+                                      "align": "end",
+                                      "color":"#000000",
+                                      "weight":"bold"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "separator"
+                                },
+                                {
+                                  "type": "box",
+                                  "layout": "horizontal",
+                                  "contents": [
+                                    {
+                                      "type": "text",
+                                      "text": "Sisa Target",
+                                      "size": "sm"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "text": "Rp 19.300.000",
+                                      "size": "sm",
+                                      "align": "end",
+                                      "color":"#dc3545",
+                                      "weight":"bold"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "filler"
+                                },
+                                {
+                                  "type": "filler"
+                                },
+                                {
+                                  "type": "text",
+                                  "margin": "xxl",
+                                  "text": "Semangat Nabungnya :)",
+                                  "color": "#cecece",
+                                  "size": "xxs",
+                                  "align": "center"
+                                }
+                              ]
                             }
                           ]
-                        }
-                      ]
-                    },
-                    "footer": {
-                      "type": "box",
-                      "layout": "horizontal",
-                      "spacing": "sm",
-                      "contents": [
-                        {
-                          "type": "button",
-                          "action": {
-                            "type": "message",
-                            "label": "Edit",
-                            "text": "Edit Naik Haji"
-                          },
-                          "style": "primary"
                         },
-                        {
-                          "type": "button",
-                          "action": {
-                            "type": "message",
-                            "label": "Hapus",
-                            "text": "Hapus Naik Haji"
-                          },
-                          "style": "primary",
-                          "color": "#dc3545"
-                        }
-                      ]
-                    }
-                  })
+                        "footer": {
+                            "type": "box",
+                            "layout": "vertical",
+                            "contents": [
+                              {
+                                "type": "box",
+                                "layout": "horizontal",
+                                "spacing": "sm",
+                                "contents": [
+                                  {
+                                    "type": "button",
+                                    "action": {
+                                      "type": "message",
+                                      "label": "Edit",
+                                      "text": "Edit Naik Haji"
+                                    },
+                                    "style": "primary"
+                                  },
+                                  {
+                                    "type": "button",
+                                    "action": {
+                                      "type": "message",
+                                      "label": "Hapus",
+                                      "text": "Hapus Naik Haji"
+                                    },
+                                    "style": "primary",
+                                    "color": "#dc3545"
+                                  }
+                                ]
+                              },
+                              {
+                                "margin": "sm",
+                                "type": "button",
+                                "action": {
+                                  "type": "message",
+                                  "label": "Atur jadi Telah Tercapai",
+                                  "text": "Atur "+value.judul+" Telah Tercapai"
+                                },
+                                "style": "primary",
+                                "color":"#F2C124"
+                              }
+                            ]
+                          }
+                      })
+                }
+                
+                
 
             })            
             promise.then((tabunganku)=>{
@@ -722,17 +759,23 @@ function getTargetTabungan(userId, replyToken) {
                     }
                     target = target.split('.').join("");
                     target = target.trim();
-                    var sisa = ((nominal-target)*-1).toString();                    
-                    if (sisa.length>3) {                        
-                        sisa = sisa.split("").reverse().join("").match(/.{1,3}/g);                                                
-                        
-                        // console.log("text="+sisa);                        
-                        for (let i = 0; i < sisa.length; i++) {                            
-                            sisa[i] = sisa[i].split("").reverse().join("");                                                
-                        }                        
-                        sisa = sisa.reverse().join(".");
+                    // var sisa = ((target-nominal)*-1).toString();
+                    var sisa = ((target-nominal) < 0 ?  "Sudah bisa dicapai" : (target-nominal).toString());
+                    // console.log(sisa);
+                    
+                    if (sisa!="Sudah bisa dicapai") {
+                        if (sisa.length>3) {
+                            sisa = sisa.split("").reverse().join("").match(/.{1,3}/g);                                                
+                            
+                            // console.log("text="+sisa);                        
+                            for (let i = 0; i < sisa.length; i++) {                            
+                                sisa[i] = sisa[i].split("").reverse().join("");                                                
+                            }                        
+                            sisa = sisa.reverse().join(".");
+                        }
+                        sisa = "Rp "+sisa;
                     }
-                    sisa = "Rp "+sisa;                    
+                    
                     balasan.contents.contents[j].body.contents[3].contents[3].contents[1].text = sisa;                    
               }              
               
@@ -801,7 +844,8 @@ function inputTargetTabungan(userId, judul, nominal, textNominal, replyToken) {
             reference.push({
                 judul:judul,
                 nominal:nominal,
-                textNominal:textNominal
+                textNominal:textNominal,
+                tercapai: false
             }, (error)=>{
                 if (error) {
                     return client.replyMessage(replyToken, {
@@ -857,7 +901,7 @@ function hapusTabungan(userId, namaTabungan, replyToken){
 }
 
 function editTabungan(userId, judulLama, judul, nominal, textNominal, replyToken) {
-    console.log(judul+"\t"+nominal);
+    // console.log(judul+"\t"+nominal);
     
     var edit = true
     if (judul=="tetap" && nominal=="tetap") {
@@ -949,6 +993,36 @@ function resetData(userId, replyToken) {
         })
     })
        
+}
+
+function setTabunganTercapai(userId, namaTabungan, replyToken) {
+    var reference = database.ref('users/'+userId+'/tabungan/target/');
+    return reference.once('value').then((data)=>{  
+                      
+        
+        data.forEach((snapshot)=>{
+            // console.log(reference.child(snapshot.key));
+            // console.log(snapshot.val().judul, namaTabungan);
+            
+            if (snapshot.val().judul==namaTabungan) {
+                reference.child(snapshot.key).update({
+                    tercapai: true
+                }).then((error)=>{
+                    if (error) {
+                        return client.replyMessage(replyToken, {
+                            'type':'text',
+                            'text':'Gagal kak, cek koneksi deh'
+                        })
+                    } else{
+                        return client.replyMessage(replyToken, {
+                            'type':'text',
+                            'text':'Selamaat, satu target tabungan kakak sudah tercapai. Semangat capai yang lainnya :)'
+                        })
+                    }
+                })
+            }
+        })
+    })
 }
 
 function addLiff() {
