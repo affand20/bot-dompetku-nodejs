@@ -317,7 +317,7 @@ function handleEvent(event) {
                 menuId = 4;
                 return client.replyMessage(event.replyToken, {
                     "type": "imagemap",
-                    "baseUrl": "https://bot-dompetku-nodejs.herokuapp.com/imagemap/1040",
+                    "baseUrl": "https://bot-dompetku-nodejs.herokuapp.com/imagemap-download",
                     "altText": "Tap untuk Lihat Laporan",
                     "baseSize": {
                         "height": 1040,
