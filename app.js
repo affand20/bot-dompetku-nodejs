@@ -29,6 +29,7 @@ var menuId = 0;
 var eventid = 0;
 var targetTabungan = {};
 var pengeluaran = {};
+var pemasukan = {};
 app.get('/' , (req, res) => res.send("Hello World"));
 app.use('/laporan', express.static('public'))
 app.listen(port, () => console.log(`Listening on port ${port}!`));
@@ -59,40 +60,64 @@ function handleEvent(event) {
             
             const text = message.text;
             
-            if (text == "Input Pemasukan" || menuId==1 && (text != "Tabunganku" && text!="Input Pengeluaran" && text!="Lihat Laporan" && text!="Reset Data" && text!="Petunjuk")) {
-                menuId = 1;
-                if (text=="Input Pemasukan") {
-                    client.replyMessage(event.replyToken, {
-                        "type":"text",
-                        "text":"Berapa duit ?"
-                    });                                
-                } else if (text.includes("Rp")) {
-                    var newText = text.substr(2);
-                    if (newText.includes(",00")) {
-                        newText = newText.replace(',00', '');                                               
-                    }
-                    if (newText.includes(",-")) {
-                        newText = newText.replace(",-", "");
-                    }
-                    newText = newText.replace('.', '');
-                    newText = newText.trim();                    
-                    // if (newText.length>3) {
-                    //     newText = newText.split("").reverse().join("").match(/.{1,3}/g);                        
-                    //     for (let i = 0; i < newText.length-1; i++) {                            
-                    //         newText[i] = newText[i].split("").reverse().join("");
-                    //     }                        
-                    //     newText = newText.reverse().join(".");
-                    // }
-                    // newText = "Rp "+newText;
+            if (text == "Input Pemasukan" || menuId==1 && 
+                (eventid == 6 || eventid == 7) &&
+                (text != "Tabunganku" && text!="Input Pengeluaran" && text!="Lihat Laporan" && text!="Reset Data" && text!="Petunjuk")) {
+                menuId = 1;                
                     
-                    inputPemasukan(event.source.userId, parseInt(newText), event.replyToken);
+                if (menuId==1&&eventid==7) {
+                    if (text.includes("Rp")) {
+                        pemasukan.textNominal = text;
+                        var newText = text.substr(2);
+                        if (newText.includes(",00")) {
+                            newText = newText.replace(',00', '');                                               
+                        }
+                        if (newText.includes(",-")) {
+                            newText = newText.replace(",-", "");
+                        }
+                        newText = newText.split(".").join("");
+                        newText = newText.trim();             
+                        // console.log("nominal="+newText);
+                                   
+                        pemasukan.nominal = newText;
+                        // if (newText.length>3) {
+                        //     newText = newText.split("").reverse().join("").match(/.{1,3}/g);                        
+                        //     for (let i = 0; i < newText.length-1; i++) {                            
+                        //         newText[i] = newText[i].split("").reverse().join("");
+                        //     }                        
+                        //     newText = newText.reverse().join(".");
+                        // }
+                        // newText = "Rp "+newText;
+                        
+                        // inputPemasukan(event.source.userId, parseInt(newText), event.replyToken);
+                        inputPemasukan(event.source.userId, pemasukan.judul, parseInt(pemasukan.nominal), pemasukan.textNominal, event.replyToken);
+    
+                    } else{
+                        client.replyMessage(event.replyToken, {
+                            "type":"text",
+                            "text":"Formatnya salah kak, tambahin Rp didepan nominalnya.."
+                        })
+                    }
+                }
 
-                } else{
+                if (menuId==1&&eventid==6) {
+                    pemasukan.judul = text;
+                    eventid = 7;
+                    // console.log("totalnya berapa, eventid"+eventid);
+                    
                     client.replyMessage(event.replyToken, {
                         "type":"text",
-                        "text":"Formatnya yang bener dong, tambahin Rp didepan nominal uangnya"
+                        "text":"Totalnya berapa kak ?"
                     })
                 }
+
+                if (text=="Input Pemasukan") {
+                    eventid = 6;
+                    client.replyMessage(event.replyToken,{
+                        "type":"text",
+                        "text":"Duit darimana kak ?"
+                    });
+                }                
             }                        
             
             else if (text == "Tabunganku" || menuId == 3 
@@ -129,7 +154,7 @@ function handleEvent(event) {
                     eventid = 4;
                     return client.replyMessage(event.replyToken, {
                         'type':'text',
-                        'text':'Target barunya berapa om ?'
+                        'text':'Target barunya berapa kakak ?'
                     })
                 }
 
@@ -148,8 +173,7 @@ function handleEvent(event) {
     
                         targetTabungan.nominal = newText;
                         
-                        if (eventid==4) {
-                            console.log('masuk');
+                        if (eventid==4) {                            
                             
                             editTabungan(event.source.userId, targetTabungan.judulLama, targetTabungan.judul, targetTabungan.nominal, textNominal, event.replyToken);
                         } else if(eventid==2){
@@ -176,7 +200,7 @@ function handleEvent(event) {
                         },
                         {
                             "type":"text",
-                            "text":"Targetnya berapa om ?"
+                            "text":"Targetnya berapa kak ?"
                         }
                     ])
                 }
@@ -190,7 +214,7 @@ function handleEvent(event) {
                     eventid=1;
                     return client.replyMessage(event.replyToken,{
                         "type":"text",
-                        "text":"Oke, apa nama tabungannya om ?"
+                        "text":"Oke, apa nama tabungannya kak ?"
                     })
                     
                 }
@@ -199,7 +223,7 @@ function handleEvent(event) {
                     eventid = 1;
                     return client.replyMessage(event.replyToken, {
                         'type':'text',
-                        'text':'Oke, nama tabungannya apa nih om ?'
+                        'text':'Oke, nama tabungannya apa nih kak ?'
                     })                    
                 }
 
@@ -211,7 +235,7 @@ function handleEvent(event) {
                     targetTabungan.judulLama = judulLama
                     return client.replyMessage(event.replyToken,{
                         'type':'text',
-                        'text':'Diganti apa nih om namanya ?'
+                        'text':'Diganti apa nih kak namanya ?'
                     })
                 }
                 
@@ -224,6 +248,7 @@ function handleEvent(event) {
 
                 if (menuId==2 && eventid==2) {
                     if (text.includes("Rp")) {
+                        pengeluaran.textNominal = text;
                         var newText = text.substr(2);
                         if (newText.includes(",00")) {
                             newText = newText.replace(',00', '');                                               
@@ -236,7 +261,7 @@ function handleEvent(event) {
                         
                         pengeluaran.nominal = newText;
 
-                        return inputPengeluaran(event.source.userId, pengeluaran.judul, pengeluaran.nominal, event.replyToken);
+                        return inputPengeluaran(event.source.userId, pengeluaran.judul, parseInt(pengeluaran.nominal), pengeluaran.textNominal, event.replyToken);
 
                     } else{
                         return client.replyMessage(event.replyToken, {
@@ -251,7 +276,7 @@ function handleEvent(event) {
                     eventid = 2;
                     return client.replyMessage(event.replyToken,{
                         'type':'text',
-                        'text':'Ngeluarin berapa duit om ?'
+                        'text':'Ngeluarin berapa duit kak ?'
                     })
                 }
                 
@@ -259,7 +284,7 @@ function handleEvent(event) {
                     eventid = 1;
                     return client.replyMessage(event.replyToken, {
                         'type':'text',
-                        'text':'Tujuannya buat apa om ?'
+                        'text':'Tujuannya buat apa kak ?'
                     })
                 }
             }
@@ -279,7 +304,7 @@ function handleEvent(event) {
                 if (text=="Reset Data") {
                     return client.replyMessage(event.replyToken, {
                         "type":"template",
-                        "altText":"Ente yakin mau hapus semua data dompetku ?",
+                        "altText":"Kakak yakin mau hapus semua data dompetku ?",
                         "template":{
                             "type":"confirm",
                             "actions":[
@@ -294,11 +319,11 @@ function handleEvent(event) {
                                     "text":"Nggak"
                                 }
                             ],
-                            "text":"Ente yakin mau hapus semua data dompetku ?"
+                            "text":"Kakak yakin mau hapus semua data dompetku ?"
                         }                    
                     })
                 } else if (text=="Ya, hapus semua") {
-                    resetData(event.source.userId);
+                    resetData(event.source.userId, event.replyToken);
                 }
             }
 
@@ -345,7 +370,7 @@ function getLaporan(userId) {
     })
 }
 
-function inputPemasukan(userId, nominal, replyToken) {    
+function inputPemasukan(userId, judul, nominal, textNominal, replyToken) {    
     
     const date = new Date();
     const now = date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate();    
@@ -370,23 +395,26 @@ function inputPemasukan(userId, nominal, replyToken) {
     database.ref('users/'+userId+'/pemasukan/'+now).push({
         tanggal:now,
         nominal:nominal,
+        judul:judul,
+        textNominal:textNominal
     }, (error)=>{
         if (error) {
             return client.replyMessage(replyToken, {
                 "type":"text",
-                "text":"Maaf, gagal menyimpan :("
+                "text":"Maaf kak, gagal menyimpan :("
             })
         } else{
             menuId = 0;
+            eventid = 0;
             return client.replyMessage(replyToken, {
                 "type":"text",
-                "text":"Sip, berhasil ane simpen om !!"
+                "text":"Sip, berhasil aku simpen kak !!"
             })
         }
     })
 }
 
-function inputPengeluaran(userId, judul, nominal, replyToken) {
+function inputPengeluaran(userId, judul, nominal, textNominal, replyToken) {
     
     const date = new Date();
     const now = date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate();    
@@ -398,11 +426,11 @@ function inputPengeluaran(userId, judul, nominal, replyToken) {
         if (data.exists()) {
             var updateTotal = (data.val().total-nominal);
             // console.log("update="+(updateTotal));
-            database.ref('users/'+userId+'/tabungan').set({
+            database.ref('users/'+userId+'/tabungan').update({
                 total:updateTotal
             })
         } else{
-            database.ref('users/'+userId+'/tabungan').set({
+            database.ref('users/'+userId+'/tabungan').update({
                 total:(nominal*-1)
             })
         }
@@ -412,22 +440,23 @@ function inputPengeluaran(userId, judul, nominal, replyToken) {
         judul:judul,
         tanggal:now,
         nominal:nominal,
+        textNominal:textNominal,
     }, (error)=>{
         if (error) {
             return client.replyMessage(replyToken, {
                 "type":"text",
-                "text":"Maaf, gagal menyimpan :("
+                "text":"Maaf kak, gagal menyimpan :("
             })
         } else{
             menuId = 0;
             return client.replyMessage(replyToken, [
                 {
                     "type":"text",
-                    "text":"Sip, berhasil ane simpen om !!"
+                    "text":"Sip, berhasil tak simpen kak !!"
                 },
                 {
                     'type':'text',
-                    'text':'Jangan boros-boros ya om, semangat nabungnya :D'
+                    'text':'Jangan boros-boros ya kak, semangat nabungnya :D'
                 }
             ])
         }
@@ -435,13 +464,14 @@ function inputPengeluaran(userId, judul, nominal, replyToken) {
 }
 
 function getTargetTabungan(userId, replyToken) {
-    return database.ref('users/'+userId+'/tabungan/target/').once('value').then((target) => {
+    var ref = database.ref('users/'+userId+'/tabungan/target/');
+    ref.once('value').then((target) => {
         if (!target.exists()) {
             
             return client.replyMessage(replyToken, [
                 {
                     "type":"text",
-                    "text":"Ente belum punya daftar tabungan om"
+                    "text":"Ente belum punya daftar tabungan kak"
                 },
                 {
                     "type":"template",
@@ -465,52 +495,232 @@ function getTargetTabungan(userId, replyToken) {
                 }
             ]);            
         } else{     
+            var i = 0;
+            var promise = database.ref('users/'+userId+"/tabungan/total").once('value');
+            // balasan.contents.contents[i].contents[4].contents[1].contents[2].text
+            
             var balasan = {
-                "type": "template",
-                "altText": "Daftar Target Tabungan",
-                "template": {
-                    "type": "carousel",
-                    "actions": [],
-                    "columns": []
-                }
-            }
-
+                "type": "flex",
+                "altText": "Daftar Tabunganmu",
+                "contents": {
+                    "type":"carousel",
+                    "contents":[]
+                }                
+              }            
+            
             target.forEach((data)=>{
-                var value = data.val();
-                // console.log(value);
+                var value = data.val();                                
                 
-                balasan.template.columns.push({
-                    "title": value.judul,
-                    "text": value.textNominal,
-                    "actions": [
+                balasan.contents.contents.push({
+                    "type": "bubble",
+                    "body": {
+                      "type": "box",
+                      "layout": "vertical",
+                      "contents": [
                         {
-                            "type": "message",
-                            "label": "Edit",
-                            "text": "Edit "+value.judul
+                          "type": "text",
+                          "text": "TABUNGANKU",
+                          "weight": "bold",
+                          "color": "#1DB446",
+                          "size": "xs"
                         },
                         {
+                          "type": "text",
+                          "text": value.judul,
+                          "weight": "bold",
+                          "margin": "md",
+                          "size": "xxl",
+                          "wrap": true
+                        },
+                        {
+                          "type": "separator",
+                          "margin": "xxl"
+                        },
+                        {
+                          "margin": "lg",
+                          "type": "box",
+                          "spacing": "md",
+                          "layout": "vertical",
+                          "contents": [
+                            {
+                              "type": "box",
+                              "layout": "horizontal",
+                              "contents": [
+                                {
+                                  "type": "text",
+                                  "text": "Tabunganmu",
+                                  "size": "sm"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "Rp 700.000",
+                                  "size": "sm",
+                                  "align": "end"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "box",
+                              "layout": "horizontal",
+                              "contents": [
+                                {
+                                  "type": "text",
+                                  "text": "Target Tabungan",
+                                  "size": "sm"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": value.textNominal,
+                                  "size": "sm",
+                                  "align": "end"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "separator"
+                            },
+                            {
+                              "type": "box",
+                              "layout": "horizontal",
+                              "contents": [
+                                {
+                                  "type": "text",
+                                  "text": "Sisa Target",
+                                  "size": "sm"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "Rp 19.300.000",
+                                  "size": "sm",
+                                  "align": "end"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "filler"
+                            },
+                            {
+                              "type": "filler"
+                            },
+                            {
+                              "type": "text",
+                              "margin": "xxl",
+                              "text": "Semangat Nabungnya :)",
+                              "color": "#cecece",
+                              "size": "xxs",
+                              "align": "center"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "footer": {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "spacing": "sm",
+                      "contents": [
+                        {
+                          "type": "button",
+                          "action": {
+                            "type": "message",
+                            "label": "Edit",
+                            "text": "Edit Naik Haji"
+                          },
+                          "style": "primary"
+                        },
+                        {
+                          "type": "button",
+                          "action": {
                             "type": "message",
                             "label": "Hapus",
-                            "text": "Hapus "+value.judul
+                            "text": "Hapus Naik Haji"
+                          },
+                          "style": "primary",
+                          "color": "#dc3545"
                         }
-                    ]
-                })               
-            })
-            return client.replyMessage(replyToken, balasan);
+                      ]
+                    }
+                  })
+
+            })            
+            promise.then((tabunganku)=>{
+                // console.log("masuk");                
+                // console.log(balasan.contents.contents.length);                
+                var tabungan = 0, nominal = 0;                
+                if (tabunganku.exists()) {
+                    tabungan = tabunganku.val().toString();
+                    nominal = tabungan;
+                }                
+                
+                
+                // console.log("tabungan = "+tabunganku.val());
+                
+                // console.log(tabungan.toString().length);                
+                if (tabungan.length>3) {                    
+                    tabungan = tabungan.split("").reverse().join("").match(/.{1,3}/g);                        
+                    // console.log("text="+tabungan);
+                    
+                    for (let i = 0; i < tabungan.length; i++) {                            
+                        tabungan[i] = tabungan[i].split("").reverse().join("");                                                
+                    }                        
+                    tabungan = tabungan.reverse().join(".");
+                }                
+                // console.log("tabungan="+tabungan);
+                
+                tabungan = "Rp "+tabungan;
+              for (let j = 0; j < balasan.contents.contents.length; j++) {
+                  balasan.contents.contents[j].body.contents[3].contents[0].contents[1].text = tabungan;
+                  var target = balasan.contents.contents[j].body.contents[3].contents[1].contents[1].text;
+                  target = target.substr(2);
+                    if (target.includes(",00")) {
+                        target = target.replace(',00', '');                                               
+                    }
+                    if (target.includes(",-")) {
+                        target = target.replace(",-", "");
+                    }
+                    target = target.split('.').join("");
+                    target = target.trim();
+                    var sisa = ((nominal-target)*-1).toString();                    
+                    if (sisa.length>3) {                        
+                        sisa = sisa.split("").reverse().join("").match(/.{1,3}/g);                                                
+                        
+                        // console.log("text="+sisa);                        
+                        for (let i = 0; i < sisa.length; i++) {                            
+                            sisa[i] = sisa[i].split("").reverse().join("");                                                
+                        }                        
+                        sisa = sisa.reverse().join(".");
+                    }
+                    sisa = "Rp "+sisa;                    
+                    balasan.contents.contents[j].body.contents[3].contents[3].contents[1].text = sisa;                    
+              }              
+              
+            }).then(()=>{
+                return client.replyMessage(replyToken, balasan);
+            })                                
         }
     }).catch((reject)=>{
-        console.log(reject);
+        console.log("rejected "+reject);
         
     })
 }
 
 function getSisaUang(userId, replyToken) {
     var uangku;
-    database.ref('users/'+userId+'/tabungan').once('value').then((sisa) => {
+    database.ref('users/'+userId+'/tabungan/total').once('value').then((sisa) => {
         if (sisa.exists()) {
             uangku = sisa.val().total;
+            uangku = uangku.toString();
+            if (uangku.length>3) {                
+                uangku = uangku.split("").reverse().join("").match(/.{1,3}/g);                        
+                
+                for (let i = 0; i < uangku.length; i++) {                            
+                    uangku[i] = uangku[i].split("").reverse().join("");                                                
+                }                        
+                uangku = uangku.reverse().join(".");
+            }
+            uangku = "Rp "+uangku;
         } else{
-            uangku = 0;
+            uangku = "Rp "+0;            
         }
         
         return client.replyMessage(replyToken, {
@@ -554,14 +764,14 @@ function inputTargetTabungan(userId, judul, nominal, textNominal, replyToken) {
                 if (error) {
                     return client.replyMessage(replyToken, {
                         'type':'text',
-                        'text':'Monmaap, input gagal. Coba koneksi ente om'
+                        'text':'Waduuuh, input gagal. Coba koneksi kaka :(('
                     })
                 } else{
                     menuId = 0;
                     eventid = 0;
                     return client.replyMessage(replyToken,{
                         "type":"text",
-                        "text":"Sip, dah ane simpen om. Semangat ye nabungnya"
+                        "text":"Sip, sudah aku simpen kak. Semangat yaa nabungnya"
                     })
                 }
                 
@@ -569,7 +779,7 @@ function inputTargetTabungan(userId, judul, nominal, textNominal, replyToken) {
         } else{
             return client.replyMessage(replyToken,{
                 'type':'text',
-                'text':'Monmaap, target tabungan udah mentok om'
+                'text':'Monmaap, target tabungan udah mentok kakk'
             })
         }
     })
@@ -590,12 +800,12 @@ function hapusTabungan(userId, namaTabungan, replyToken){
                         if (error) {
                             return client.replyMessage(replyToken, {
                                 'type':'text',
-                                'text':'Gagal hapus om, cek koneksi deh'
+                                'text':'Gagal hapus kak, cek koneksi deh'
                             })
                         } else{
                             return client.replyMessage(replyToken, {
                                 'type':'text',
-                                'text':'Berhasil ane hapus om'
+                                'text':'Berhasil aku hapus kak'
                             })
                         }
                     })
@@ -612,7 +822,7 @@ function editTabungan(userId, judulLama, judul, nominal, textNominal, replyToken
         edit = false;
         return client.replyMessage(replyToken, {
             'type':'text',
-            'text':'Lahh gajadi dirubah om ? wkwk'
+            'text':'Lahh gajadi dirubah kak ? wkwk'
         })
     };
     if (edit) {
@@ -628,12 +838,12 @@ function editTabungan(userId, judulLama, judul, nominal, textNominal, replyToken
                             if (error) {
                                 return client.replyMessage(replyToken, {
                                     'type':'text',
-                                    'text':'Gagal update om, cek koneksi deh'
+                                    'text':'Gagal update kak, cek koneksi deh'
                                 })
                             } else{
                                 return client.replyMessage(replyToken, {
                                     'type':'text',
-                                    'text':'Berhasil ane update om'
+                                    'text':'Berhasil aku update kak'
                                 })
                             }
                         })
@@ -644,12 +854,12 @@ function editTabungan(userId, judulLama, judul, nominal, textNominal, replyToken
                             if (error) {
                                 return client.replyMessage(replyToken, {
                                     'type':'text',
-                                    'text':'Gagal update om, cek koneksi deh'
+                                    'text':'Gagal update kak, cek koneksi deh'
                                 })
                             } else{                                
                                 return client.replyMessage(replyToken, {
                                     'type':'text',
-                                    'text':'Berhasil ane update om'
+                                    'text':'Berhasil aku update kak'
                                 })
                             }
                         })
@@ -662,12 +872,12 @@ function editTabungan(userId, judulLama, judul, nominal, textNominal, replyToken
                             if (error) {
                                 return client.replyMessage(replyToken, {
                                     'type':'text',
-                                    'text':'Gagal update om, cek koneksi deh'
+                                    'text':'Gagal update kak, cek koneksi deh'
                                 })
                             } else{                                
                                 return client.replyMessage(replyToken, {
                                     'type':'text',
-                                    'text':'Berhasil ane update om'
+                                    'text':'Berhasil aku update kak'
                                 })
                             }
                         })
@@ -696,4 +906,5 @@ function resetData(userId, replyToken) {
             })
         })
     })
+       
 }
