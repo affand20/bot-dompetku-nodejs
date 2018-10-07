@@ -35,6 +35,12 @@ var pengeluaran = {};
 var pemasukan = {};
 app.get('/' , (req, res) => res.send("Hello World"));
 app.use('/laporan', express.static('public'))
+app.use('/imagemap/', express.static('public/images/imagemap-700.png'));
+app.use('/imagemap/1040', express.static('public/images/imagemap-1040.png'));
+app.use('/imagemap/700', express.static('public/images/imagemap-700.png'));
+app.use('/imagemap/460', express.static('public/images/imagemap-460.png'));
+app.use('/imagemap/300', express.static('public/images/imagemap-300.png'));
+app.use('/imagemap/240', express.static('public/images/imagemap-240.png'));
 app.listen(port, () => console.log(`Listening on port ${port}!`));
 
 app.post('/webhook', line.middleware(config), (req, res) => {
@@ -304,7 +310,7 @@ function handleEvent(event) {
                 menuId = 4;
                 return client.replyMessage(event.replyToken, {
                     "type": "imagemap",
-                    "baseUrl": "localhost:3001/laporan/images/imagemap.png",
+                    "baseUrl": "https://bot-dompetku-nodejs.herokuapp.com/laporan/images/imagemap",
                     "altText": "Tap untuk Lihat Laporan",
                     "baseSize": {
                         "height": 1040,
@@ -500,7 +506,7 @@ function getTargetTabungan(userId, replyToken) {
             return client.replyMessage(replyToken, [
                 {
                     "type":"text",
-                    "text":"Ente belum punya daftar tabungan kak"
+                    "text":"Kamu belum punya daftar tabungan kak"
                 },
                 {
                     "type":"template",
@@ -737,7 +743,7 @@ function getSisaUang(userId, replyToken) {
     var uangku;
     database.ref('users/'+userId+'/tabungan/total').once('value').then((sisa) => {
         if (sisa.exists()) {
-            uangku = sisa.val().total;
+            uangku = sisa.val();
             uangku = uangku.toString();
             if (uangku.length>3) {                
                 uangku = uangku.split("").reverse().join("").match(/.{1,3}/g);                        
@@ -752,7 +758,7 @@ function getSisaUang(userId, replyToken) {
             uangku = "Rp "+0;            
         }
         
-        return client.replyMessage(replyToken, {
+        return client.replyMessage(replyToken, {            
             "type": "template",
             "altText": "Menu Tabungan",
             "template": {
@@ -776,7 +782,7 @@ function getSisaUang(userId, replyToken) {
                 ],
                 "title": "Tabunganmu",
                 "text": "Uang kamu saat ini : "+uangku
-            }
+            },            
         })
     })    
 }
