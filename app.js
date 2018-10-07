@@ -41,6 +41,13 @@ app.use('/imagemap/700', express.static('public/images/imagemap-700.png'));
 app.use('/imagemap/460', express.static('public/images/imagemap-460.png'));
 app.use('/imagemap/300', express.static('public/images/imagemap-300.png'));
 app.use('/imagemap/240', express.static('public/images/imagemap-240.png'));
+app.get('/imagemap-download', (req,res)=>{
+    var file = __dirname + '/public/images/imagemap-1040.png';
+    console.log(file);
+    res.download(file);
+    // res.send('imagemap page.');
+    
+})
 app.listen(port, () => console.log(`Listening on port ${port}!`));
 
 app.post('/webhook', line.middleware(config), (req, res) => {
@@ -310,7 +317,7 @@ function handleEvent(event) {
                 menuId = 4;
                 return client.replyMessage(event.replyToken, {
                     "type": "imagemap",
-                    "baseUrl": "https://bot-dompetku-nodejs.herokuapp.com/laporan/images/imagemap",
+                    "baseUrl": "https://bot-dompetku-nodejs.herokuapp.com/imagemap/1040",
                     "altText": "Tap untuk Lihat Laporan",
                     "baseSize": {
                         "height": 1040,
@@ -323,8 +330,8 @@ function handleEvent(event) {
                             "area": {
                                 "x": 0,
                                 "y": 0,
-                                "width": 1040,
-                                "height": 1040
+                                "width": 700,
+                                "height": 700
                             }
                         }                        
                     ]
