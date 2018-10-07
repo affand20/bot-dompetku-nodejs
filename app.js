@@ -3,7 +3,7 @@ const express = require('express');
 const line = require('@line/bot-sdk');
 const PROCESS_NODE = require('process');
 const firebase = require('firebase');
-const storage = require('store/dist/store.modern');
+const request = require('request');
 
 const port = PROCESS_NODE.env.PORT || 3001;
 
@@ -23,6 +23,9 @@ var configFirebase = {
 
 firebase.initializeApp(configFirebase);
 var database = firebase.database();
+
+getLiff();
+// getRichMenu();
 
 const app = express();
 var menuId = 0;
@@ -52,8 +55,14 @@ function handleEvent(event) {
     // get data
     // readDataUser();
     
-    
-    if (event.type === 'message') {
+    if (event.type == 'join') {
+        return client.replyMessage(event.replyToken,[
+            {
+                
+            }
+        ])
+    }
+    else if (event.type === 'message') {
         const message = event.message;        
 
         if (message.type == 'text') {
@@ -293,7 +302,27 @@ function handleEvent(event) {
                     && (text!="Input Pemasukan" && text!="Input Pengeluaran" && text!="Tabunganku" && text!="Reset Data" && text!="Petunjuk")
                 ){
                 menuId = 4;
-                getLaporan(event.source.userId, event.replyToken);
+                return client.replyMessage(event.replyToken, {
+                    "type": "imagemap",
+                    "baseUrl": "localhost:3001/laporan/images/imagemap.png",
+                    "altText": "Tap untuk Lihat Laporan",
+                    "baseSize": {
+                        "height": 1040,
+                        "width": 1040
+                    },
+                    "actions": [
+                        {
+                            "type": "uri",
+                            "linkUri": "line://app/1607576128-DLpN36z5",
+                            "area": {
+                                "x": 0,
+                                "y": 0,
+                                "width": 1040,
+                                "height": 1040
+                            }
+                        }                        
+                    ]
+                })
             }
 
             else if(text=="Reset Data"||menuId==5 
@@ -907,4 +936,47 @@ function resetData(userId, replyToken) {
         })
     })
        
+}
+
+function addLiff() {
+    var jsonData = {
+        "view":{
+            "type":"full",
+            "url":"https://bot-dompetku-nodejs.herokuapp.com/laporan"
+        }
+    }
+
+    request({
+        url:"https://api.line.me/liff/v1/apps",
+        body: jsonData,
+        json: true,
+        method: 'POST',
+        headers:{
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer { lxDSFG57mPcz6g6uiyJJxWVMTMf2ud6xKhHDgSHf8Zj3af3OwD/2PvZewztMgP87rdgD697ZahJU/v2uLQcNNIx/GCW1ijK/S2sqQbfx55Y5lSQ1dt17CdnbCaN761Hil2L7Vhv8kekCLAg0wMiUGAdB04t89/1O/w1cDnyilFU= }'
+        }
+    }, (err, res, body)=>{
+        if (err) {
+            console.log(err);            
+        } else{
+            console.log(res.statusCode, body);            
+        }
+    })
+}
+
+function getLiff() {
+    request({
+        url:"https://api.line.me/liff/v1/apps",
+        method: "GET",
+        json:true,
+        headers:{
+            'Authorization': 'Bearer { lxDSFG57mPcz6g6uiyJJxWVMTMf2ud6xKhHDgSHf8Zj3af3OwD/2PvZewztMgP87rdgD697ZahJU/v2uLQcNNIx/GCW1ijK/S2sqQbfx55Y5lSQ1dt17CdnbCaN761Hil2L7Vhv8kekCLAg0wMiUGAdB04t89/1O/w1cDnyilFU= }'            
+        }
+    }, (err, res, body)=>{
+        if (err) {
+            console.log(err);            
+        } else{
+            console.log(res.statusCode, body);            
+        }
+    })
 }
